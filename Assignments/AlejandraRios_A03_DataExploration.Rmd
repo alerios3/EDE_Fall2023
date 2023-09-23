@@ -1,0 +1,282 @@
+---
+title: "Assignment 3: Data Exploration"
+author: "Alejandra Rios"
+date: "Fall 2023"
+output: pdf_document
+geometry: margin=2.54cm
+editor_options: 
+  chunk_output_type: console
+---
+
+## OVERVIEW
+
+This exercise accompanies the lessons in Environmental Data Analytics on Data Exploration.
+
+## Directions
+
+1.  Rename this file `<FirstLast>_A03_DataExploration.Rmd` (replacing `<FirstLast>` with your first and last name).
+2.  Change "Student Name" on line 3 (above) with your name.
+3.  Work through the steps, **creating code and output** that fulfill each instruction. 
+4.  Assign a useful **name to each code chunk** and include ample **comments** with your code.
+5.  Be sure to **answer the questions** in this assignment document.
+6.  When you have completed the assignment, **Knit** the text and code into a single PDF file.
+7.  After Knitting, submit the completed exercise (PDF file) to the dropbox in Sakai.
+
+**TIP**: If your code extends past the page when knit, tidy your code by manually inserting line breaks.
+
+**TIP**: If your code fails to knit, check that no `install.packages()` or `View()` commands exist in your code. 
+
+---
+
+## Set up your R session
+  
+1.  Check your working directory, load necessary packages (tidyverse, lubridate), and upload two datasets: the ECOTOX neonicotinoid dataset (ECOTOX_Neonicotinoids_Insects_raw.csv) and the Niwot Ridge NEON dataset for litter and woody debris (NEON_NIWO_Litter_massdata_2018-08_raw.csv). Name these datasets "Neonics" and "Litter", respectively. Be sure to include the subcommand to read strings in as factors.
+
+```{r,  message = FALSE}
+#set working directory
+setwd("/home/guest/EDE_Fall2023")
+
+# instal packages with install.packages
+install.packages(tidyverse)
+library(tidyverse)
+install.packages(lubridate)
+library(lubridate)
+
+#assign dataset to neonics
+#assign other dataset to litter
+neonics <- read.csv("Data/Raw/ECOTOX_Neonicotinoids_Insects_raw.csv")
+print(neonics)
+litter <- read.csv("Data/Raw/NEON_NIWO_Litter_massdata_2018-08_raw.csv")
+print(litter)
+
+```
+
+## Learn about your system
+
+2.  The neonicotinoid dataset was collected from the Environmental Protection Agency's ECOTOX Knowledgebase, a database for ecotoxicology research. Neonicotinoids are a class of insecticides used widely in agriculture. The dataset that has been pulled includes all studies published on insects. Why might we be interested in the ecotoxicology of neonicotinoids on insects? Feel free to do a brief internet search if you feel you need more background information.
+
+> Answer: We need to study the impact of neoicotinoids on insect populations to understand gage biodiversity and ecosystem health. 
+
+3.  The Niwot Ridge litter and woody debris dataset was collected from the National Ecological Observatory Network, which collectively includes 81 aquatic and terrestrial sites across 20 ecoclimatic domains. 32 of these sites sample forest litter and woody debris, and we will focus on the Niwot Ridge long-term ecological research (LTER) station in Colorado. Why might we be interested in studying litter and woody debris that falls to the ground in forests? Feel free to do a brief internet search if you feel you need more background information.
+
+> Answer: Litter provides a habitat for many insects. 
+
+4.  How is litter and woody debris sampled as part of the NEON network? Read the NEON_Litterfall_UserGuide.pdf document to learn more. List three pieces of salient information about the sampling methods here:
+
+> Answer: 
+ 1. Plots
+ 2. Litter Traps
+ 3. 
+
+## Obtain basic summaries of your data (Neonics)
+
+5.  What are the dimensions of the dataset?
+
+```{r}
+#assign dataset to neonics
+#assign other dataset to litter
+neonics <- read.csv("Data/Raw/ECOTOX_Neonicotinoids_Insects_raw.csv")
+litter <- read.csv("Data/Raw/NEON_NIWO_Litter_massdata_2018-08_raw.csv")
+
+#print dimensions of each using print(dim())
+print(dim(neonics))
+print(dim(litter))
+
+```
+
+6.  Using the `summary` function on the "Effect" column, determine the most common effects that are studied. Why might these effects specifically be of interest?
+
+```{r}
+#assign dataset to neonics
+neonics <- read.csv("./Data/Raw/ECOTOX_Neonicotinoids_Insects_raw.csv", stringsAsFactor = TRUE)
+
+#print summary of effect column in neonics by using print(summary(dataset$column))
+print(summary(neonics$Effect))
+
+```
+
+> Answer: We want to know how insects respond to neonicotinoids to find out how insect populations could be impacted from the use of pesticides. 
+
+
+7.  Using the `summary` function, determine the six most commonly studied species in the dataset (common name). What do these species have in common, and why might they be of interest over other insects? Feel free to do a brief internet search for more information if needed.[TIP: The `sort()` command can sort the output of the summary command...]
+
+```{r}
+#assign dataset to neonics
+neonics <- read.csv("./Data/Raw/ECOTOX_Neonicotinoids_Insects_raw.csv", stringsAsFactor = TRUE)
+
+#look at summary of species
+summary(neonics$Species.Common.Name)
+
+#sort through the summary of species by using sort(table(dataset$column, decreasing = TRUE))
+#assign to an object 
+#use object to be sorted by names. Assign to new object. Print new object to find the top species
+sort_summary <-sort(table(neonics$Species.Common.Name),decreasing=TRUE)
+top <-names(sort_summary[1:6])
+print(top)
+
+```
+
+> Answer: Knowing the most common insects within an ecosystem is important to compare to sites impacted by pesticides and gage the pesticides' impact on insect. 
+
+8.  Concentrations are always a numeric value. What is the class of `Conc.1..Author.` column in the dataset, and why is it not numeric?
+
+```{r}
+#assign dataset to neonics
+neonics <- read.csv("./Data/Raw/ECOTOX_Neonicotinoids_Insects_raw.csv", stringsAsFactor = TRUE)
+
+#look at summary of column in neonics 
+print(summary(neonics$Conc.1..Author.))
+
+#find class using class()
+class(neonics)
+
+```
+
+> Answer: You cannot do math with the numbers as the numbers do not have real value.
+
+## Explore your data graphically (Neonics)
+
+9.  Using `geom_freqpoly`, generate a plot of the number of studies conducted by publication year.
+
+```{r}
+#load ggplot
+library(ggplot2)
+
+#assign dataset to neonics object
+neonics <- read.csv("./Data/Raw/ECOTOX_Neonicotinoids_Insects_raw.csv", stringsAsFactor = TRUE)
+
+#make ggplot look at neonics dataset with puclication.year for the x values and bins as how the data is separtated/displayed. Use geom_freqpoly() to make frequncy polygraph.
+ggplot(neonics, aes(x = Publication.Year), bins = 50) + 
+  geom_freqpoly()
+
+```
+
+10. Reproduce the same graph but now add a color aesthetic so that different Test.Location are displayed as different colors.
+
+```{r}
+# load ggplot
+library(ggplot2)
+
+#assign dataset to "neonics" vector 
+neonics <- read.csv("./Data/Raw/ECOTOX_Neonicotinoids_Insects_raw.csv", stringsAsFactor = TRUE)
+
+#make 2 frequency polygon graphs with x equals publication. year and test.location, bins is how the data is displayed, and color is the color of the graph
+ggplot(neonics) +
+  geom_freqpoly(aes(x = Publication.Year, color = "black"), bins = 50) +
+  scale_x_continuous(1982,2020)
+  geom_freqpoly(aes(x = Test.Location, color = "pink"), bins = 50) +
+  scale_x_continuous(1, 2)
+  
+
+```
+
+Interpret this graph. What are the most common test locations, and do they differ over time?
+
+> Answer: Common test locations are in the lab and in the field, however most are in the lab.
+
+11. Create a bar graph of Endpoint counts. What are the two most common end points, and how are they defined? Consult the ECOTOX_CodeAppendix for more information. 
+
+[**TIP**: Add `theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))` to the end of your plot command to rotate and align the X-axis labels...]
+
+```{r}
+#load ggplot
+library(ggplot2)
+
+#assign dataset to "neonics" vector 
+neonics <- read.csv("./Data/Raw/ECOTOX_Neonicotinoids_Insects_raw.csv", stringsAsFactor = TRUE)
+
+#geom_bar to make bar graph with endpoint for the x values
+ggplot(neonics)+
+  geom_bar(aes(x = Endpoint))
+
+#rotate and align the x-axis
+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+> Answer:
+
+## Explore your data (Litter)
+
+12. Determine the class of collectDate. Is it a date? If not, change to a date and confirm the new class of the variable. Using the `unique` function, determine which dates litter was sampled in August 2018.
+
+```{r}
+#assign dataset to "litter" object
+litter <- read.csv("Data/Raw/NEON_NIWO_Litter_massdata_2018-08_raw.csv")
+print(litter)
+
+# use class() to find class 
+print(class(litter$collectDate))
+
+#used as.Date() to convert to date
+collect_date <- as.Date(litter$collectDate, format = "%Y-%m-%d")
+print(collect_date)
+
+#find unique values within a dataset by using unique(dataset$column(specifc dates))
+#make sure to use as.Date() for the dates so it reads it as a date
+#set function as an object then print the object
+august_2018 <- unique(litter$collectDate[litter$collectDate >= as.Date("2018-08-01") & litter$collectDate <= as.Date("2018-08-31")])
+print(august_2018)
+  
+```
+
+13. Using the `unique` function, determine how many plots were sampled at Niwot Ridge. How is the information obtained from `unique` different from that obtained from `summary`?
+
+```{r}
+#assign dataset to "litter" object
+litter <- read.csv("Data/Raw/NEON_NIWO_Litter_massdata_2018-08_raw.csv")
+print(litter$plotID)
+
+#list and combine all plot names with c() 
+#assign it to an object
+plot_names <- c("NIWO_61","NIWO_64","NIWO_67","NIWO_40","NIWO_41","NIWO_63","NIWO_47","NIWO_51","NIWO_58","NIWO_46","NIWO_62")
+
+#find length of plots
+#assign plot length to object and print
+plot_number <- length(plots_unique)
+print(plot_number)
+```
+
+> Answer: The information from unique() evaluates the data and find specific values, where a summary() evaluates a dataset and its statistics
+
+14. Create a bar graph of functionalGroup counts. This shows you what type of litter is collected at the Niwot Ridge sites. Notice that litter types are fairly equally distributed across the Niwot Ridge sites.
+
+```{r}
+#load ggplot
+library (ggplot2)
+
+#assign dataset to "litter" object
+litter <- read.csv("Data/Raw/NEON_NIWO_Litter_massdata_2018-08_raw.csv")
+print(litter$functionalGroup)
+
+ggplot(litter)+
+  geom_bar(aes(x = functionalGroup))
+
+```
+
+15. Using `geom_boxplot` and `geom_violin`, create a boxplot and a violin plot of dryMass by functionalGroup.
+
+```{r}
+#load ggplot
+library(ggplot2)
+
+#assign dataset to "litter" object
+litter <- read.csv("Data/Raw/NEON_NIWO_Litter_massdata_2018-08_raw.csv")
+print(litter)
+
+#use geom_boxplot to make a box plot with dryMass for x values and funtionalGroup for y values
+ggplot(litter)+
+  geom_boxplot(aes(x=dryMass, y=functionalGroup))
+
+#use geom_violin to make violin plot with draw_quantiles as how to display the data
+ggplot(litter)+
+  geom_violin(aes(x=dryMass, y=functionalGroup), draw_quantiles = c(0.25,0.5,0.75))
+```
+
+Why is the boxplot a more effective visualization option than the violin plot in this case?
+
+> Answer: The violin plot is too detailed. 
+
+What type(s) of litter tend to have the highest biomass at these sites?
+
+> Answer: Needles have the highest biomass.
